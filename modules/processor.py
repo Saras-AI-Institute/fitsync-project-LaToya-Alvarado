@@ -78,22 +78,24 @@ def calculate_recovery_score(df):
 
     # Define constants for calculation
     SCORE_SLEEP_GOOD = 20  # Increment for good sleep
-    SCORE_SLEEP_BAD = -30  # Decrement for poor sleep
-    SCORE_HEART_RATE_FACTOR = 0.2  # Factor to reduce score by heart rate
-    SCORE_STEPS_HIGH_ACTIVITY_PENALTY = 0.1  # Factor to reduce score by steps over 12,000
+    SCORE_SLEEP_BAD = 30  # Decrement for poor sleep
+    SCORE_HEART_RATE_FACTOR = 0.5  # Factor to reduce score by heart rate
+    SCORE_STEPS_LOW_ACTIVITY_PENALTY = 10
+    SCORE_STEPS_HIGH_ACTIVITY_PENALTY = 15  # Factor to reduce score by steps over 12,000
 
     # Initialize the Recovery_score column
     df['Recovery_score'] = 50  # Start with a base score
 
     # Adjust score based on Sleep_Hours
     df.loc[df['Sleep_Hours'] >= 7, 'Recovery_score'] += SCORE_SLEEP_GOOD
-    df.loc[df['Sleep_Hours'] < 6, 'Recovery_score'] += SCORE_SLEEP_BAD
+    df.loc[df['Sleep_Hours'] < 6, 'Recovery_score'] -= SCORE_SLEEP_BAD
 
     # Adjust score based on Heart_Rate_bpm (lower is better)
-    df['Recovery_score'] -= df['Heart_Rate_bpm'] * SCORE_HEART_RATE_FACTOR
+    df['Recovery_score'] += (68 - df['Heart_Rate_bpm']) * SCORE_HEART_RATE_FACTOR
 
     # Adjust score based on Steps (very high levels might cause strain)
-    df.loc[df['Steps'] > 12000, 'Recovery_score'] -= (df['Steps'] - 12000) * SCORE_STEPS_HIGH_ACTIVITY_PENALTY
+    df.loc[df['Steps'] < 4000, 'Recovery_score'] -= SCORE_STEPS_HIGH_ACTIVITY_PENALTY
+    df.loc[df['Steps'] > 12000, 'Recovery_score'] -= SCORE_STEPS_HIGH_ACTIVITY_PENALTY
 
     # Ensure Recovery_score is between 0 and 100
     df['Recovery_score'] = df['Recovery_score'].apply(clamp)
