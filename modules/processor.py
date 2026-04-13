@@ -101,3 +101,21 @@ def calculate_recovery_score(df):
     df['Recovery_score'] = df['Recovery_score'].apply(clamp)
 
     return df
+
+
+def process_data():
+    """
+    Main function to process health data for the Streamlit dashboard.
+    - Loads and cleans the data using load_data()
+    - Calculates the Recovery Score using calculate_recovery_score()
+    
+    Returns:
+        pd.DataFrame: Fully processed DataFrame with cleaned data and Recovery Score.
+    """
+    # Load and clean the data
+    df = load_data()
+    
+    # Calculate and add the Recovery Score
+    df = calculate_recovery_score(df)
+    
+    return df
