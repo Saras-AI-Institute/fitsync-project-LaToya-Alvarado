@@ -83,11 +83,17 @@ if st.session_state.dark_mode:
         div[data-testid="stHorizontalBlock"] {
             background-color: #0e1117;
         }
-        /* Sidebar styling */
+        /* Sidebar styling - Dark Mode */
         [data-testid="stSidebar"] {
             background-color: #1e2130 !important;
         }
-        [data-testid="stSidebar"] * {
+        [data-testid="stSidebar"] > div:first-child {
+            background-color: #1e2130 !important;
+        }
+        [data-testid="stSidebar"] .stMarkdown {
+            color: #fafafa !important;
+        }
+        [data-testid="stSidebar"] label {
             color: #fafafa !important;
         }
         [data-testid="stSidebar"] h1, 
@@ -95,11 +101,24 @@ if st.session_state.dark_mode:
         [data-testid="stSidebar"] h3 {
             color: #58a6ff !important;
         }
-        /* Sidebar selectbox styling */
-        [data-testid="stSidebar"] [data-testid="stSelectbox"] {
+        /* Sidebar selectbox */
+        [data-testid="stSidebar"] .stSelectbox label {
+            color: #fafafa !important;
+        }
+        [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] {
             background-color: #262c3e !important;
         }
-        [data-testid="stSidebar"] [data-testid="stSelectbox"] * {
+        [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div {
+            background-color: #262c3e !important;
+            color: #fafafa !important;
+        }
+        /* Sidebar info boxes */
+        [data-testid="stSidebar"] .stAlert {
+            background-color: #1e3a5f !important;
+            color: #fafafa !important;
+        }
+        /* Sidebar checkbox */
+        [data-testid="stSidebar"] .stCheckbox label {
             color: #fafafa !important;
         }
         </style>
@@ -173,11 +192,17 @@ else:
         div[data-testid="stHorizontalBlock"] {
             background-color: #ffffff;
         }
-        /* Sidebar styling */
+        /* Sidebar styling - Light Mode */
         [data-testid="stSidebar"] {
             background-color: #f8f9fa !important;
         }
-        [data-testid="stSidebar"] * {
+        [data-testid="stSidebar"] > div:first-child {
+            background-color: #f8f9fa !important;
+        }
+        [data-testid="stSidebar"] .stMarkdown {
+            color: #0e1117 !important;
+        }
+        [data-testid="stSidebar"] label {
             color: #0e1117 !important;
         }
         [data-testid="stSidebar"] h1, 
@@ -185,11 +210,24 @@ else:
         [data-testid="stSidebar"] h3 {
             color: #1f77b4 !important;
         }
-        /* Sidebar selectbox styling */
-        [data-testid="stSidebar"] [data-testid="stSelectbox"] {
-            background-color: #e9ecef !important;
+        /* Sidebar selectbox */
+        [data-testid="stSidebar"] .stSelectbox label {
+            color: #0e1117 !important;
         }
-        [data-testid="stSidebar"] [data-testid="stSelectbox"] * {
+        [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] {
+            background-color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div {
+            background-color: #ffffff !important;
+            color: #0e1117 !important;
+        }
+        /* Sidebar info boxes */
+        [data-testid="stSidebar"] .stAlert {
+            background-color: #d1ecf1 !important;
+            color: #0e1117 !important;
+        }
+        /* Sidebar checkbox */
+        [data-testid="stSidebar"] .stCheckbox label {
             color: #0e1117 !important;
         }
         </style>
