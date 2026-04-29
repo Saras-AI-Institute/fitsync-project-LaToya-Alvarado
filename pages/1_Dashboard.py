@@ -119,7 +119,7 @@ title_col, _, toggle_col = st.columns([7, 1, 1])
 with title_col:
     st.title("FitSync Health Dashboard")
 with toggle_col:
-    st.write("")
+    st.write("🌞 Light mode")
     st.toggle("🌙 Dark mode", key="dark_mode")
     inject_theme_css(st.session_state.dark_mode)   # re-apply after toggle
 
