@@ -2,5 +2,7 @@
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "continue.enableConsole": true,
     "continue.enableNextEdit": false,
-    "continue.enableTabAutocomplete": false
+    "continue.enableTabAutocomplete": false,
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.pythonPath": "/usr/local/bin/python"
 }

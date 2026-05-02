@@ -12,7 +12,7 @@ st.set_page_config(page_title="FitSync Dashboard", layout="wide")
 
 # ── Theme state ───────────────────────────────────────────────────────────────
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
+    st.session_state.dark_mode = True
 
 
 def inject_theme_css(dark):
@@ -42,14 +42,19 @@ def inject_theme_css(dark):
 
     st.markdown(f"""
     <style>
+    :root {{
+        --background-color: {bg} !important;
+        --secondary-background-color: {surface} !important;
+        --text-color: {text} !important;
+    }}
     .stApp, [data-testid="stAppViewContainer"] {{
-        background-color: {bg};
+        background-color: {bg} !important;
     }}
     [data-testid="stHeader"] {{
-        background-color: {header_bg};
+        background-color: {header_bg} !important;
         border-bottom: 1px solid {border};
     }}
-    .main .block-container {{ background-color: {bg}; }}
+    .main .block-container {{ background-color: {bg} !important; }}
 
     /* Sidebar */
     [data-testid="stSidebar"] {{
@@ -114,17 +119,23 @@ def inject_theme_css(dark):
 # ── Apply theme before any widget renders ────────────────────────────────────
 inject_theme_css(st.session_state.dark_mode)
 
-# ── Header row: title left, dark-mode toggle right ───────────────────────────
-title_col, light_col, toggle_col = st.columns([13, 1, 2])
-with title_col:
-    st.title("FitSync Health Dashboard")
-with light_col:
-    st.write("🌞 *Light*")
-with toggle_col:
-    st.toggle("🌙 *Dark*", key="dark_mode")
-    inject_theme_css(st.session_state.dark_mode)   # re-apply after toggle
+# ── Sidebar: theme toggle ─────────────────────────────────────────────────────
+with st.sidebar:
+    lc, rc = st.columns([1, 1.5], vertical_alignment="center")
+    with lc:
+        st.write("🌞 Light")
+    with rc:
+        _toggled = st.toggle("🌙 Dark", value=st.session_state.dark_mode)
+if _toggled != st.session_state.dark_mode:
+    st.session_state.dark_mode = _toggled
+    st.rerun()
+inject_theme_css(st.session_state.dark_mode)
+st.sidebar.divider()
 
-# ── Resolve theme variables (must come after toggle) ─────────────────────────
+# ── Page title ────────────────────────────────────────────────────────────────
+st.title("FitSync Health Dashboard")
+
+# ── Resolve theme variables ───────────────────────────────────────────────────
 dark_mode          = st.session_state.dark_mode
 plotly_tpl         = "plotly_dark"  if dark_mode else "plotly_white"
 paper_bg           = "#1a1f2e"      if dark_mode else "#f0f2f6"
@@ -157,7 +168,7 @@ def load_data():
 df = load_data()
 
 # ── Sidebar: time-range filter ────────────────────────────────────────────────
-st.sidebar.header("📊 Filters")
+st.sidebar.markdown("**📊 Filters**")
 time_filter = st.sidebar.selectbox(
     "Time Range",
     ["Last 7 Days", "Last 30 Days", "All Time"],

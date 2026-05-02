@@ -10,7 +10,7 @@ st.set_page_config(page_title="FitSync – Trends & Insights", layout="wide")
 
 # ── Theme state ───────────────────────────────────────────────────────────────
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
+    st.session_state.dark_mode = True
 
 
 def inject_theme_css(dark):
@@ -40,14 +40,19 @@ def inject_theme_css(dark):
 
     st.markdown(f"""
     <style>
+    :root {{
+        --background-color: {bg} !important;
+        --secondary-background-color: {surface} !important;
+        --text-color: {text} !important;
+    }}
     .stApp, [data-testid="stAppViewContainer"] {{
-        background-color: {bg};
+        background-color: {bg} !important;
     }}
     [data-testid="stHeader"] {{
-        background-color: {header_bg};
+        background-color: {header_bg} !important;
         border-bottom: 1px solid {border};
     }}
-    .main .block-container {{ background-color: {bg}; }}
+    .main .block-container {{ background-color: {bg} !important; }}
 
     /* Sidebar */
     [data-testid="stSidebar"] {{
@@ -111,15 +116,21 @@ def inject_theme_css(dark):
 # ── Apply theme immediately ───────────────────────────────────────────────────
 inject_theme_css(st.session_state.dark_mode)
 
-# ── Header row: title left, dark-mode toggle right ───────────────────────────
-title_col, light_col, toggle_col = st.columns([13, 1, 2])
-with title_col:
-    st.title("Trends & Insights")
-with light_col:
-    st.write("🌞 *Light*")
-with toggle_col:
-    st.toggle("🌙 *Dark*", key="dark_mode")
-    inject_theme_css(st.session_state.dark_mode)
+# ── Sidebar: theme toggle ─────────────────────────────────────────────────────
+with st.sidebar:
+    lc, rc = st.columns([1, 1.5], vertical_alignment="center")
+    with lc:
+        st.write("🌞 Light")
+    with rc:
+        _toggled = st.toggle("🌙 Dark", value=st.session_state.dark_mode)
+if _toggled != st.session_state.dark_mode:
+    st.session_state.dark_mode = _toggled
+    st.rerun()
+inject_theme_css(st.session_state.dark_mode)
+st.sidebar.divider()
+
+# ── Page title ────────────────────────────────────────────────────────────────
+st.title("Trends & Insights")
 
 # ── Resolve theme variables for Plotly charts ─────────────────────────────────
 dark_mode  = st.session_state.dark_mode
@@ -152,7 +163,7 @@ def load_data():
 df = load_data()
 
 # ── Sidebar: time-range filter ────────────────────────────────────────────────
-st.sidebar.header("Filters")
+st.sidebar.markdown("**Filters**")
 time_filter = st.sidebar.selectbox(
     "Time Range",
     ["Last 7 Days", "Last 30 Days", "All Time"],
@@ -191,10 +202,36 @@ for col, (label, (field, fmt)) in zip(stat_cols, METRICS.items()):
         help=f"Min: {min_val:{fmt}}  |  Max: {max_val:{fmt}}",
     )
 
-# Detailed stats table (mean / min / max)
-cols = ["Recovery_score", "Sleep_Hours", "Steps", "Calories_Burned"]
+# Detailed stats table (mean / min / max / std) — custom HTML for dark mode support
+surface = "#1a1f2e" if dark_mode else "#f0f2f6"
+border  = "#2d3748" if dark_mode else "#dde1e9"
+subtext = "#9ea3b0" if dark_mode else "#6b6f7a"
+
+cols  = ["Recovery_score", "Sleep_Hours", "Steps", "Calories_Burned"]
 stats = filtered_df[cols].agg(["mean", "min", "max", "std"]).round(2)
-st.dataframe(stats, use_container_width=True)
+
+col_labels = ["", "Recovery Score", "Sleep Hours", "Steps", "Calories Burned"]
+header_cells = "".join(
+    f'<th style="padding:10px 16px; text-align:right; color:{subtext}; '
+    f'border-bottom:2px solid {border};">{h}</th>' for h in col_labels
+)
+
+rows_html = ""
+for stat in ["mean", "min", "max", "std"]:
+    row_vals = stats.loc[stat]
+    cells = f'<td style="padding:10px 16px; color:{subtext}; border-bottom:1px solid {border};">{stat}</td>'
+    for val in row_vals:
+        cells += (f'<td style="padding:10px 16px; text-align:right; color:{font_col}; '
+                  f'border-bottom:1px solid {border};">{val:,.2f}</td>')
+    rows_html += f"<tr>{cells}</tr>"
+
+st.markdown(f"""
+<table style="width:100%; border-collapse:collapse; background:{surface};
+              border-radius:10px; overflow:hidden; border:1px solid {border};">
+  <thead><tr>{header_cells}</tr></thead>
+  <tbody>{rows_html}</tbody>
+</table>
+""", unsafe_allow_html=True)
 
 st.divider()
 
