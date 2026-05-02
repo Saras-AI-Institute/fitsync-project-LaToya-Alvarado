@@ -4,6 +4,12 @@
 
 ---
 
+## 🚀 Live Demo
+
+**[▶ Open FitSync](https://fitsync--latoya.streamlit.app/)** — deployed on Streamlit Community Cloud · no login required
+
+---
+
 ## 📌 Project Overview
 
 FitSync is a multi-page personal health analytics dashboard built to surface meaningful patterns from daily fitness and recovery data. The platform ingests CSV-based health records, cleans and enriches them with a custom recovery-score algorithm, and presents the results through an interactive Streamlit interface. Three purpose-built pages give users a quick snapshot on the home screen, deep KPI analysis on the Dashboard, and long-term trend exploration on the Trends & Insights page. This project demonstrates end-to-end data product ownership — from raw data processing and feature engineering through to polished, recruiter-ready visualization.
