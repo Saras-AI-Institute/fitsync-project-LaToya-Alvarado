@@ -11,7 +11,6 @@ def inject_theme_css(dark):
         bg         = "#0e1117"
         surface    = "#1a1f2e"
         text       = "#fafafa"
-        subtext    = "#9ea3b0"
         border     = "#2d3748"
         sidebar_bg = "#111827"
         title_color = "#58a6ff"
@@ -19,24 +18,30 @@ def inject_theme_css(dark):
         bg         = "#ffffff"
         surface    = "#f0f2f6"
         text       = "#262730"
-        subtext    = "#6b6f7a"
         border     = "#dde1e9"
         sidebar_bg = "#f0f2f6"
         title_color = "#1f77b4"
 
     st.markdown(f"""
     <style>
-    .stApp {{
+    .stApp, [data-testid="stAppViewContainer"] {{
         background-color: {bg};
         color: {text};
     }}
-    .main .block-container {{ 
+    [data-testid="stHeader"] {{
+        background-color: {bg};
+        border-bottom: none;
+    }}
+    .main .block-container {{
       background-color: {bg};
-      border: 1px solid {border};
+      border: none;
     }}
     h1 {{
         color: {title_color};
     }}
+    p, li, .stMarkdown, .stText {{ color: {text}; }}
+    label {{ color: {text} !important; }}
+    [data-testid="stToggle"] * {{ color: {text} !important; }}
     /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: {sidebar_bg};
@@ -48,11 +53,12 @@ def inject_theme_css(dark):
 
 inject_theme_css(st.session_state.dark_mode)
 
-col1, col2 = st.columns([6, 1])
-with col2:
-    if st.button("🌙" if not st.session_state.dark_mode else "☀️", key="theme_toggle"):
-        st.session_state.dark_mode = not st.session_state.dark_mode
-        st.experimental_rerun()
+title_col, light_col, toggle_col = st.columns([13, 1, 2])
+with light_col:
+    st.write("🌞 *Light*")
+with toggle_col:
+    st.toggle("🌙 *Dark*", key="dark_mode")
+    inject_theme_css(st.session_state.dark_mode)
 
 st.title("Your Fitness Journey Starts Here! :muscle:")
 

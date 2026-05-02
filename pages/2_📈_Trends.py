@@ -1,14 +1,12 @@
-import sys
-sys.path.append('/workspaces/fitsync-project-LaToya-Alvarado')
-
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import pandas as pd
 from datetime import timedelta
 from modules.processor import process_data
 
 # ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="FitSync Dashboard", layout="wide")
+st.set_page_config(page_title="FitSync – Trends & Insights", layout="wide")
 
 # ── Theme state ───────────────────────────────────────────────────────────────
 if "dark_mode" not in st.session_state:
@@ -16,7 +14,7 @@ if "dark_mode" not in st.session_state:
 
 
 def inject_theme_css(dark):
-    """Inject CSS that recolors every Streamlit surface for the chosen mode."""
+    """Inject CSS for the chosen light/dark mode."""
     if dark:
         bg         = "#0e1117"
         surface    = "#1a1f2e"
@@ -97,7 +95,6 @@ def inject_theme_css(dark):
     }}
     [data-testid="stMetricValue"] {{ color: {text} !important; }}
     [data-testid="stMetricLabel"] {{ color: {subtext} !important; }}
-    [data-testid="stMetricDelta"] {{ color: {subtext} !important; }}
 
     /* Divider & selectbox */
     hr {{ border-color: {border}; }}
@@ -111,31 +108,30 @@ def inject_theme_css(dark):
     """, unsafe_allow_html=True)
 
 
-# ── Apply theme before any widget renders ────────────────────────────────────
+# ── Apply theme immediately ───────────────────────────────────────────────────
 inject_theme_css(st.session_state.dark_mode)
 
 # ── Header row: title left, dark-mode toggle right ───────────────────────────
-title_col, _, toggle_col = st.columns([7, 1, 1])
+title_col, light_col, toggle_col = st.columns([13, 1, 2])
 with title_col:
-    st.title("FitSync Health Dashboard")
+    st.title("Trends & Insights")
+with light_col:
+    st.write("🌞 *Light*")
 with toggle_col:
-    st.write("🌞 Light mode")
-    st.toggle("🌙 Dark mode", key="dark_mode")
-    inject_theme_css(st.session_state.dark_mode)   # re-apply after toggle
+    st.toggle("🌙 *Dark*", key="dark_mode")
+    inject_theme_css(st.session_state.dark_mode)
 
-# ── Resolve theme variables (must come after toggle) ─────────────────────────
-dark_mode          = st.session_state.dark_mode
-plotly_tpl         = "plotly_dark"  if dark_mode else "plotly_white"
-paper_bg           = "#1a1f2e"      if dark_mode else "#f0f2f6"
-plot_bg            = "#1a1f2e"      if dark_mode else "#f8f9fa"
-font_col           = "#fafafa"      if dark_mode else "#262730"
-grid_col           = "#2d3748"      if dark_mode else "#e5e7eb"
-section_header_col = "#58a6ff"      if dark_mode else "#1f77b4"
+# ── Resolve theme variables for Plotly charts ─────────────────────────────────
+dark_mode  = st.session_state.dark_mode
+plotly_tpl = "plotly_dark"  if dark_mode else "plotly_white"
+paper_bg   = "#1a1f2e"      if dark_mode else "#f0f2f6"
+plot_bg    = "#1a1f2e"      if dark_mode else "#f8f9fa"
+font_col   = "#fafafa"      if dark_mode else "#262730"
+grid_col   = "#2d3748"      if dark_mode else "#e5e7eb"
 
 
 def chart_layout(title, extra=None):
-    """Return a Plotly layout dict with the active theme applied.
-    Title color is set explicitly so it stays readable in both modes."""
+    """Return a Plotly layout dict with the active theme applied."""
     layout = dict(
         title=dict(text=title, font=dict(size=15, color=font_col)),
         paper_bgcolor=paper_bg,
@@ -156,7 +152,7 @@ def load_data():
 df = load_data()
 
 # ── Sidebar: time-range filter ────────────────────────────────────────────────
-st.sidebar.header("📊 Filters")
+st.sidebar.header("Filters")
 time_filter = st.sidebar.selectbox(
     "Time Range",
     ["Last 7 Days", "Last 30 Days", "All Time"],
@@ -171,30 +167,43 @@ else:
     filtered_df = df.copy()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 1 — 📈 KEY METRICS
-# 4 cards: Avg Steps, Sleep, Heart Rate, Recovery Score — each with a delta
+# SECTION 1 — SUMMARY STATISTICS
+# Shows mean / min / max for the four key health metrics
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(f'<h2 style="color: {section_header_col};">📈 Key Metrics</h2>', unsafe_allow_html=True)
-m1, m2, m3, m4 = st.columns(4)
+st.subheader("Summary Statistics")
 
-avg_steps      = filtered_df["Steps"].mean()
-avg_sleep      = filtered_df["Sleep_Hours"].mean()
-avg_heart_rate = filtered_df["Heart_Rate_bpm"].mean()
-avg_recovery   = filtered_df["Recovery_score"].mean()
+METRICS = {
+    "Recovery Score":  ("Recovery_score",  ".1f"),
+    "Sleep Hours":     ("Sleep_Hours",     ".1f"),
+    "Steps":           ("Steps",           ",.0f"),
+    "Calories Burned": ("Calories_Burned", ".1f"),
+}
 
-m1.metric("Average Daily Steps",    f"{avg_steps:,.0f}",      f"{avg_steps - 7500:.0f} from goal")
-m2.metric("Average Sleep (hours)",  f"{avg_sleep:.1f}",       f"{avg_sleep - 7:.1f} from recommended")
-m3.metric("Average Heart Rate (bpm)", f"{avg_heart_rate:.0f}", f"{68 - avg_heart_rate:.0f} from baseline")
-m4.metric("Average Recovery Score", f"{avg_recovery:.1f}",    f"{avg_recovery - 50:.1f} from baseline")
+# Metric cards row
+stat_cols = st.columns(len(METRICS))
+for col, (label, (field, fmt)) in zip(stat_cols, METRICS.items()):
+    mean_val = filtered_df[field].mean()
+    min_val  = filtered_df[field].min()
+    max_val  = filtered_df[field].max()
+    col.metric(
+        label=label,
+        value=f"{mean_val:{fmt}}",
+        help=f"Min: {min_val:{fmt}}  |  Max: {max_val:{fmt}}",
+    )
+
+# Detailed stats table (mean / min / max)
+cols = ["Recovery_score", "Sleep_Hours", "Steps", "Calories_Burned"]
+stats = filtered_df[cols].agg(["mean", "min", "max", "std"]).round(2)
+st.dataframe(stats, use_container_width=True)
 
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 2 — 📉 RECOVERY SCORE & SLEEP TRENDS
-# Left : Dual-axis line — Recovery Score & Sleep Hours over time
-# Right: Scatter        — Recovery Score vs Steps, coloured by Sleep Hours
+# SECTION 2 — TREND CHARTS (2 columns)
+# Left : Dual line — Recovery Score & Sleep Hours over time
+# Right: Scatter   — Recovery Score vs Steps, coloured by Sleep Hours
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(f'<h2 style="color: {section_header_col};">📉 Recovery Score & Sleep Trends</h2>', unsafe_allow_html=True)
+st.subheader("Recovery Score & Sleep Trends")
 col_left, col_right = st.columns(2)
 
 # Left — dual-axis line chart
@@ -267,16 +276,16 @@ with col_right:
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 3 — ❤️ HEART RATE & CALORIES
+# SECTION 3 — HEART RATE & CALORIES CHARTS (2 columns)
 # Left : Scatter — Recovery Score vs Resting Heart Rate
 # Right: Line    — Calories Burned over time
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(f'<h2 style="color: {section_header_col};">❤️ Heart Rate & Calories</h2>', unsafe_allow_html=True)
+st.subheader("Heart Rate & Calories")
 col_left2, col_right2 = st.columns(2)
 
 # Left — scatter: Recovery Score vs Resting Heart Rate
 with col_left2:
-    fig_hr_scatter = px.scatter(
+    fig_hr = px.scatter(
         filtered_df,
         x="Heart_Rate_bpm",
         y="Recovery_score",
@@ -288,14 +297,14 @@ with col_left2:
         },
         template=plotly_tpl,
     )
-    fig_hr_scatter.update_layout(**chart_layout(
+    fig_hr.update_layout(**chart_layout(
         "Recovery Score vs Resting Heart Rate",
         extra=dict(
             xaxis=dict(gridcolor=grid_col),
             yaxis=dict(gridcolor=grid_col),
         ),
     ))
-    st.plotly_chart(fig_hr_scatter, use_container_width=True)
+    st.plotly_chart(fig_hr, use_container_width=True)
 
 # Right — line chart: Calories Burned over time
 with col_right2:
@@ -303,7 +312,10 @@ with col_right2:
         filtered_df,
         x="Date",
         y="Calories_Burned",
-        labels={"Date": "Date", "Calories_Burned": "Calories Burned"},
+        labels={
+            "Date":            "Date",
+            "Calories_Burned": "Calories Burned",
+        },
         template=plotly_tpl,
     )
     fig_cal.update_traces(line=dict(color="#00CC96", width=2))
@@ -319,148 +331,76 @@ with col_right2:
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 4 — 📊 HEALTH TRENDS
-# Row 1: Daily Steps line | Sleep Hours line
-# Row 2: Heart Rate line  | Recovery Score line
-# Each chart has a reference baseline/goal line
+# SECTION 4 — MONTHLY AVERAGE RECOVERY SCORE
+# Line chart grouped by month
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(f'<h2 style="color: {section_header_col};">📊 Health Trends</h2>', unsafe_allow_html=True)
+st.subheader("Monthly Average Recovery Score")
 
-# Row 1: Steps and Sleep
-col1, col2 = st.columns(2)
+monthly = (
+    filtered_df.copy()
+    .assign(Month=lambda d: d["Date"].dt.to_period("M").dt.to_timestamp())
+    .groupby("Month", as_index=False)["Recovery_score"]
+    .mean()
+)
 
-with col1:
-    st.markdown(f'<h3 style="color: {font_col};">👣 Daily Steps</h3>', unsafe_allow_html=True)
-    fig_steps = px.line(
-        filtered_df,
-        x="Date",
-        y="Steps",
-        labels={"Steps": "Steps", "Date": "Date"},
-        template=plotly_tpl,
-    )
-    fig_steps.add_hline(y=7500, line_dash="dash", line_color="green",
-                        annotation_text="Recommended (7,500)")
-    fig_steps.update_traces(line_color="#1f77b4", line_width=2)
-    fig_steps.update_layout(
-        height=350,
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_steps, use_container_width=True)
-
-with col2:
-    st.markdown(f'<h3 style="color: {font_col};">😴 Sleep Hours</h3>', unsafe_allow_html=True)
-    fig_sleep = px.line(
-        filtered_df,
-        x="Date",
-        y="Sleep_Hours",
-        labels={"Sleep_Hours": "Sleep (hours)", "Date": "Date"},
-        template=plotly_tpl,
-    )
-    fig_sleep.add_hline(y=7, line_dash="dash", line_color="green",
-                        annotation_text="Recommended (7 hrs)")
-    fig_sleep.update_traces(line_color="#ff7f0e", line_width=2)
-    fig_sleep.update_layout(
-        height=350,
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_sleep, use_container_width=True)
-
-# Row 2: Heart Rate and Recovery Score
-col3, col4 = st.columns(2)
-
-with col3:
-    st.markdown(f'<h3 style="color: {font_col};">❤️ Heart Rate</h3>', unsafe_allow_html=True)
-    fig_hr_line = px.line(
-        filtered_df,
-        x="Date",
-        y="Heart_Rate_bpm",
-        labels={"Heart_Rate_bpm": "Heart Rate (bpm)", "Date": "Date"},
-        template=plotly_tpl,
-    )
-    fig_hr_line.add_hline(y=68, line_dash="dash", line_color="green",
-                          annotation_text="Baseline (68 bpm)")
-    fig_hr_line.update_traces(line_color="#d62728", line_width=2)
-    fig_hr_line.update_layout(
-        height=350,
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_hr_line, use_container_width=True)
-
-with col4:
-    st.markdown(f'<h3 style="color: {font_col};">🔄 Recovery Score</h3>', unsafe_allow_html=True)
-    fig_recovery = px.line(
-        filtered_df,
-        x="Date",
-        y="Recovery_score",
-        labels={"Recovery_score": "Recovery Score", "Date": "Date"},
-        template=plotly_tpl,
-    )
-    fig_recovery.add_hline(y=50, line_dash="dash", line_color="gray",
-                           annotation_text="Baseline (50)")
-    fig_recovery.update_traces(line_color="#2ca02c", line_width=2)
-    fig_recovery.update_layout(
-        height=350,
-        yaxis_range=[0, 100],
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_recovery, use_container_width=True)
+fig_monthly = px.line(
+    monthly,
+    x="Month",
+    y="Recovery_score",
+    markers=True,
+    labels={"Month": "Month", "Recovery_score": "Avg Recovery Score"},
+    template=plotly_tpl,
+)
+fig_monthly.update_traces(
+    line=dict(color="#636EFA", width=2.5),
+    marker=dict(size=7, color="#636EFA"),
+)
+fig_monthly.update_layout(**chart_layout(
+    "Average Recovery Score by Month",
+    extra=dict(
+        xaxis=dict(title="Month", gridcolor=grid_col),
+        yaxis=dict(title="Avg Recovery Score", gridcolor=grid_col),
+    ),
+))
+st.plotly_chart(fig_monthly, use_container_width=True)
 
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 5 — 🔍 COMBINED ANALYSIS
-# Left (2/3 width) : Correlation heatmap of key metrics
-# Right (1/3 width): Recovery Score distribution histogram
+# SECTION 5 — DISTRIBUTIONS (2 × 2 histogram grid)
+# Steps, Calories Burned, Recovery Score, Sleep Hours
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown(f'<h2 style="color: {section_header_col};">🔍 Combined Analysis</h2>', unsafe_allow_html=True)
-col_wide, col_narrow = st.columns([2, 1])
+st.subheader("Distributions")
 
-# Left — correlation matrix heatmap
-with col_wide:
-    st.markdown(f'<h3 style="color: {font_col};">Correlation Matrix</h3>', unsafe_allow_html=True)
-    corr_columns = ["Steps", "Sleep_Hours", "Heart_Rate_bpm", "Recovery_score"]
-    correlation_matrix = filtered_df[corr_columns].corr()
+HIST_CONFIGS = [
+    ("Steps",           "Daily Steps",     "#636EFA"),
+    ("Calories_Burned", "Calories Burned", "#EF553B"),
+    ("Recovery_score",  "Recovery Score",  "#00CC96"),
+    ("Sleep_Hours",     "Sleep Hours",     "#AB63FA"),
+]
 
-    fig_corr = px.imshow(
-        correlation_matrix,
-        text_auto=".2f",
-        color_continuous_scale="RdBu_r",
-        aspect="auto",
-        labels=dict(color="Correlation"),
-        template=plotly_tpl,
-    )
-    fig_corr.update_layout(
-        height=400,
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_corr, use_container_width=True)
+row1_l, row1_r = st.columns(2)
+row2_l, row2_r = st.columns(2)
+hist_cols = [row1_l, row1_r, row2_l, row2_r]
 
-# Right — Recovery Score distribution
-with col_narrow:
-    st.markdown(f'<h3 style="color: {font_col};">Recovery Score Distribution</h3>', unsafe_allow_html=True)
-    fig_dist = px.histogram(
-        filtered_df,
-        x="Recovery_score",
-        nbins=20,
-        labels={"Recovery_score": "Recovery Score", "count": "Frequency"},
-        template=plotly_tpl,
-    )
-    fig_dist.update_traces(marker_color="#2ca02c")
-    fig_dist.update_layout(
-        height=400,
-        showlegend=False,
-        paper_bgcolor=paper_bg,
-        plot_bgcolor=plot_bg,
-        font=dict(color=font_col),
-    )
-    st.plotly_chart(fig_dist, use_container_width=True)
+for col, (field, x_label, color) in zip(hist_cols, HIST_CONFIGS):
+    with col:
+        fig_hist = px.histogram(
+            filtered_df,
+            x=field,
+            nbins=25,
+            labels={field: x_label},
+            template=plotly_tpl,
+            color_discrete_sequence=[color],
+        )
+        fig_hist.update_layout(**chart_layout(
+            f"Distribution of {x_label}",
+            extra=dict(
+                xaxis=dict(title=x_label, gridcolor=grid_col),
+                yaxis=dict(title="Count",  gridcolor=grid_col),
+                bargap=0.05,
+            ),
+        ))
+        st.plotly_chart(fig_hist, use_container_width=True)
+with st.expander("🔍 View Raw Data"):
+    st.dataframe(filtered_df)

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(streamlit run *)",
+      "Bash(pkill -f \"streamlit run\")",
+      "Bash(fuser -k 8501/tcp)"
+    ]
+  }
+}
