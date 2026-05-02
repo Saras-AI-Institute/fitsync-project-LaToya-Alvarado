@@ -299,7 +299,6 @@ with col_left2:
             "Recovery_score": "Recovery Score",
         },
         template=plotly_tpl,
-        trendline="ols",
     )
     fig_hr_scatter.update_layout(**chart_layout(
         "Recovery Score vs Resting Heart Rate",

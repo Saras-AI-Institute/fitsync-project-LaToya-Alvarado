@@ -10,6 +10,32 @@ FitSync is a multi-page personal health analytics dashboard built to surface mea
 
 ---
 
+## ✨ Key Features
+
+**Home**
+- Hero landing page with navigation cards guiding users to each analytical section
+
+**Dashboard**
+- 4 KPI metric cards — Steps, Sleep, Heart Rate, Recovery Score — each with a delta vs goal or baseline
+- Dual-axis trend line: Recovery Score and Sleep Hours overlaid on one chart
+- Scatter plots: Recovery vs Steps (coloured by Sleep Hours) and Recovery vs Resting Heart Rate with OLS trendline
+- 2 × 2 health trend grid with goal/baseline reference lines for every metric
+- Correlation heatmap and Recovery Score distribution histogram for combined analysis
+- Sidebar time-range filter (Last 7 Days / Last 30 Days / All Time) as the single source of truth for every chart on the page
+
+**Trends & Insights**
+- Summary statistics table showing mean, min, max, and standard deviation for all key metrics
+- **Automated plain-English Key Insights** — sentences generated directly from the filtered data values, updating in real time as the time range changes
+- Monthly average Recovery Score trend line grouped by calendar month
+- 4-panel distribution histogram grid across Steps, Calories, Recovery Score, and Sleep Hours
+
+**Platform-wide**
+- 🌙 **Dark / light mode toggle** ☀️ — persists across all pages via Streamlit session state
+- ⚡ **Performance caching** via `@st.cache_data` — data loads once per session, not on every interaction
+- 🧮 **Custom Recovery Score algorithm** — a purpose-built formula combining sleep hours, resting heart rate, and daily steps into a single 0–100 health metric
+
+---
+
 ## 🛠 Tech Stack
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)

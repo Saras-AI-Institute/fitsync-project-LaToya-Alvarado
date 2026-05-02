@@ -1,7 +1,6 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
 from datetime import timedelta
 from modules.processor import process_data
 
@@ -232,6 +231,98 @@ st.markdown(f"""
   <tbody>{rows_html}</tbody>
 </table>
 """, unsafe_allow_html=True)
+
+st.divider()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 1b — KEY INSIGHTS
+# Auto-generated plain-English sentences driven by the filtered data values.
+# Each metric has three tiers (good / moderate / poor) so the language changes
+# depending on the selected time range.
+# ─────────────────────────────────────────────────────────────────────────────
+accent = "#58a6ff" if dark_mode else "#1f77b4"
+
+avg_recovery = filtered_df["Recovery_score"].mean()
+avg_sleep    = filtered_df["Sleep_Hours"].mean()
+avg_steps    = filtered_df["Steps"].mean()
+avg_hr       = filtered_df["Heart_Rate_bpm"].mean()
+
+if avg_recovery >= 70:
+    recovery_insight = (
+        f"✅ **Recovery Score {avg_recovery:.1f}** — above the strong threshold. "
+        "Your body is responding well to your current activity and rest balance."
+    )
+elif avg_recovery >= 50:
+    recovery_insight = (
+        f"🟡 **Recovery Score {avg_recovery:.1f}** — moderate, above baseline. "
+        "There is room to improve through more consistent sleep or reduced overtraining."
+    )
+else:
+    recovery_insight = (
+        f"🔴 **Recovery Score {avg_recovery:.1f}** — below the 50-point baseline. "
+        "Prioritise sleep quality and consider reducing high-intensity days."
+    )
+
+if avg_sleep >= 7:
+    sleep_insight = (
+        f"✅ **Sleep {avg_sleep:.1f} hrs/night** — meeting the recommended minimum. "
+        "Consistent sleep is the strongest single driver of your recovery score."
+    )
+elif avg_sleep >= 6:
+    sleep_insight = (
+        f"🟡 **Sleep {avg_sleep:.1f} hrs/night** — slightly below the 7-hour recommendation. "
+        "Even 30 extra minutes per night can measurably lift your recovery score."
+    )
+else:
+    sleep_insight = (
+        f"🔴 **Sleep {avg_sleep:.1f} hrs/night** — well below recommended levels. "
+        "Poor sleep is the single biggest drag on recovery — this is the first thing to address."
+    )
+
+if avg_steps >= 7500:
+    steps_insight = (
+        f"✅ **{avg_steps:,.0f} steps/day** — above the 7,500-step goal. "
+        "You are consistently hitting an active lifestyle threshold."
+    )
+elif avg_steps >= 5000:
+    steps_insight = (
+        f"🟡 **{avg_steps:,.0f} steps/day** — approaching the 7,500 goal. "
+        "Small, consistent increases each day will close this gap."
+    )
+else:
+    steps_insight = (
+        f"🔴 **{avg_steps:,.0f} steps/day** — below the active threshold. "
+        "Sustained low activity can reduce recovery scores over time."
+    )
+
+if avg_hr <= 65:
+    hr_insight = (
+        f"✅ **Resting HR {avg_hr:.0f} bpm** — excellent. "
+        "A resting heart rate this low is a strong indicator of cardiovascular fitness."
+    )
+elif avg_hr <= 75:
+    hr_insight = (
+        f"🟡 **Resting HR {avg_hr:.0f} bpm** — within the healthy range. "
+        "Sustained aerobic activity over weeks will gradually lower this further."
+    )
+else:
+    hr_insight = (
+        f"🔴 **Resting HR {avg_hr:.0f} bpm** — elevated above the 68 bpm baseline. "
+        "This can reflect accumulated stress or insufficient recovery time."
+    )
+
+st.markdown(
+    f'<h2 style="color:{accent}; margin-bottom:4px;">💡 Key Insights</h2>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f'<p style="color:{subtext}; font-size:0.9rem; margin-bottom:16px;">'
+    f'Generated from your {time_filter.lower()} data</p>',
+    unsafe_allow_html=True,
+)
+
+for insight in [recovery_insight, sleep_insight, steps_insight, hr_insight]:
+    st.markdown(insight)
 
 st.divider()
 
